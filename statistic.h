@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <map>
 #include "board.h"
 #include "action.h"
 #include "agent.h"
@@ -48,7 +49,8 @@ public:
 	 */
 	void show(bool tstat = true) const {
 		size_t blk = std::min(data.size(), block);
-		size_t stat[64] = { 0 };
+		std::map<uint32_t,int> stat;
+        //size_t stat[64] = { 0 };
 		size_t sop = 0, pop = 0, eop = 0;
 		time_t sdu = 0, pdu = 0, edu = 0;
 		board::reward sum = 0, max = 0;
@@ -57,7 +59,15 @@ public:
 			auto& ep = *(--it);
 			sum += ep.score();
 			max = std::max(ep.score(), max);
-			stat[*std::max_element(&(ep.state()(0)), &(ep.state()(16)))]++;
+            uint32_t max_tile=*std::max_element(&(ep.state()(0)), &(ep.state()(16)));
+            auto stat_iter = stat.find(max_tile);
+			if(stat_iter==stat.end()){
+                stat.insert(std::pair<uint32_t,int>(max_tile,1));
+            }
+            else{
+                stat_iter->second++;
+            }
+            //stat[*std::max_element(&(ep.state()(0)), &(ep.state()(16)))]++;
 			sop += ep.step();
 			pop += ep.step(action::slide::type);
 			eop += ep.step(action::place::type);
@@ -79,12 +89,14 @@ public:
 		std::cout.copyfmt(ff);
 
 		if (!tstat) return;
-		for (size_t t = 0, c = 0; c < blk; c += stat[t++]) {
-			if (stat[t] == 0) continue;
-			unsigned accu = std::accumulate(std::begin(stat) + t, std::end(stat), 0);
-			std::cout << "\t" << t; // type
+        int accu=0;
+		for (auto sit=stat.begin(); sit!=stat.end(); sit++) {
+			if (sit->second == 0) continue;
+			//unsigned accu = std::accumulate(std::begin(stat) + t, std::end(stat), 0);
+			accu=accu+sit->second;
+            std::cout << "\t" << sit->first; // type
 			std::cout << "\t" << (accu * 100.0 / blk) << "%"; // win rate
-			std::cout << "\t" "(" << (stat[t] * 100.0 / blk) << "%" ")"; // percentage of ending
+			std::cout << "\t" "(" << (sit->second * 100.0 / blk) << "%" ")"; // percentage of ending
 			std::cout << std::endl;
 		}
 		std::cout << std::endl;
