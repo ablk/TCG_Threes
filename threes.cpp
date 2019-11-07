@@ -25,6 +25,7 @@ int main(int argc, const char* argv[]) {
 	std::string play_args, evil_args;
 	std::string load, save;
 	bool summary = false;
+    bool vb=false;
 	for (int i = 1; i < argc; i++) {
 		std::string para(argv[i]);
 		if (para.find("--total=") == 0) {
@@ -43,6 +44,8 @@ int main(int argc, const char* argv[]) {
 			save = para.substr(para.find("=") + 1);
 		} else if (para.find("--summary") == 0) {
 			summary = true;
+		} else if (para.find("-v") == 0) {
+			vb = true;
 		}
 	}
 
@@ -65,7 +68,7 @@ int main(int argc, const char* argv[]) {
 
 		stat.open_episode(play.name() + ":" + evil.name());
 		episode& game = stat.back();
-        //int i=0;
+        int i=0;
 		while (true) {
 
 			agent& who = game.take_turns(play, evil);
@@ -74,9 +77,10 @@ int main(int argc, const char* argv[]) {
             //strategy define in agent.take_action
             //return action::slide or action::place
             
-            
-            //std::cout<<"================="<<i++<<"================="<<std::endl;
-            //std::cout<<game.state()<<std::endl;
+            if(vb){
+                std::cout<<"================="<<i++<<"================="<<std::endl;
+                std::cout<<game.state()<<std::endl;
+            }
             //std::cout<<move<<std::endl;
             
 			if (game.apply_action(move) != true) break;
@@ -87,12 +91,14 @@ int main(int argc, const char* argv[]) {
 			if (who.check_for_win(game.state())) break;
             //no win for this game, always false 
 		}
+        if(vb)std::cout<<game.state()<<std::endl;
 		agent& win = game.last_turns(play, evil);
 		stat.close_episode(win.name());
 
 		play.close_episode(win.name());
 		evil.close_episode(win.name());
 	}
+    if(vb)std::cout<<play.WTF_weight_agent<<std::endl;
 
 	if (summary) {
 		stat.summary();

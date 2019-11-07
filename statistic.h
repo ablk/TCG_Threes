@@ -94,7 +94,7 @@ public:
 			if (sit->second == 0) continue;
 			//unsigned accu = std::accumulate(std::begin(stat) + t, std::end(stat), 0);
 			accu=accu+sit->second;
-            std::cout << "\t" << sit->first; // type
+            std::cout << "\t" << tile_decode_table[sit->first]; // type
 			std::cout << "\t" << (accu * 100.0 / blk) << "%"; // win rate
 			std::cout << "\t" "(" << (sit->second * 100.0 / blk) << "%" ")"; // percentage of ending
 			std::cout << std::endl;

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include <map>
 
 /**
  * array-based board for 2048
@@ -14,6 +15,33 @@
  * (12) (13) (14) (15)
  *
  */
+std::map<uint32_t,int> tile_decode_table=
+{
+    {0,0},
+    {1,1},
+    {2,2},
+    {3,3},
+    {4,6},
+    {5,12},
+    {6,24},
+    {7,48},
+    {8,96},
+    {9,192},
+    {10,384},
+    {11,768},
+    {12,1536},
+    {13,3072},
+    {14,6144},
+    {15,12288}
+};
+unsigned opcode_decode_table[4][8]=
+{//[op][board_flip]
+    {0,3,2,1,0,3,2,1},
+    {1,0,3,2,3,2,1,0},
+    {2,1,0,3,2,1,0,3},
+    {3,2,1,0,1,0,3,2},
+};
+
 class board {
 public:
 	typedef uint32_t cell;
@@ -23,8 +51,8 @@ public:
 	typedef int reward;
 
 public:
-	board() : tile(), attr(0) {}
-	board(const grid& b, data v = 0) : tile(b), attr(v) {}
+	board() : tile(), attr(0){}
+	board(const grid& b, data v = 0) : tile(b), attr(v){}
 	board(const board& b) = default;
 	board& operator =(const board& b) = default;
 
@@ -87,9 +115,15 @@ public:
                 }
                 if (hold!=0) {
                     int sum=row[c]+hold;
-                    if ((row[c] == hold && row[c]>=3)|| sum==3) {
+                    if (sum==3){
                         row[c-1]=sum;
                         score += sum;
+                        row[c]=0;
+                        hold=0;
+                    }
+                    else if (row[c] == hold && row[c]>=3) {
+                        row[c-1]+=1;
+                        score += tile_decode_table[sum];
                         row[c]=0;
                         hold=0;
                     }
@@ -154,6 +188,21 @@ public:
 		case 3: rotate_left(); break;
 		}
 	}
+    
+    void Flip_board(int r=0){
+        switch(r){
+            case 0: break;
+            case 1: rotate_right(); break;
+            case 2: reverse(); break;
+            case 3: rotate_left(); break;
+            case 4: reflect_horizontal(); break;
+            case 5: rotate_right(); reflect_horizontal(); break;
+            case 6: reflect_vertical(); break;
+            case 7: rotate_left(); reflect_horizontal(); break;
+            default : break;
+        }
+    }
+    
 
 	void rotate_right() { transpose(); reflect_horizontal(); } // clockwise
 	void rotate_left() { transpose(); reflect_vertical(); } // counterclockwise
@@ -169,13 +218,21 @@ public:
         }
     
     }
+    void clear(){
+        for(unsigned i=0;i<16;i++)this->operator()(i)=0;
+    }
+    
+    uint32_t& max_tile(){
+        return *std::max_element(&(this->operator()(0)), &(this->operator()(16)));
+    }
+    
 
 public:
 	friend std::ostream& operator <<(std::ostream& out, const board& b) {
 		out << "+------------------------+" << std::endl;
 		for (auto& row : b.tile) {
 			out << "|" << std::dec;
-			for (auto t : row) out << std::setw(6) << t;
+        for (auto t : row) out << std::setw(6) << tile_decode_table[t];
 			out << "|" << std::endl;
 		}
 		out << "+------------------------+" << std::endl;
